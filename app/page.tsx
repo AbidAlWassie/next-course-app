@@ -1,3 +1,4 @@
+// app/page.tsx
 import SessionProvider from "@/components/SessionProvider"
 import UI from "./ui"
 

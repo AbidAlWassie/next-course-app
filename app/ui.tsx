@@ -1,5 +1,6 @@
-// src/app/ui.tsx
+// app/ui.tsx
 "use client"
+import { useSession } from "next-auth/react"
 
 import { Navbar } from "@/components/layouts/Navbar"
 
@@ -11,6 +12,7 @@ import { Button } from "../components/ui/button"
 import { Card, CardContent } from "../components/ui/card"
 
 export default function Home() {
+  const { status } = useSession()
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100">
       <Navbar />
