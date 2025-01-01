@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  email         String          @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  Authenticator Authenticator[]
+  courseLinks   UserCourse[]
+  sslKeys       String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+ 
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@id([provider, providerAccountId])
+}
+ 
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+ 
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+ 
+  @@id([identifier, token])
+}
+ 
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+ 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ 
+  @@id([userId, credentialID])
+}
+
+model Course {
+  id         String       @id @default(cuid())
+  courseName String
+  slug       String       @unique
+  subs       String[]
+  users      UserCourse[] // This represents the many-to-many relationship with User
+}
+
+model UserCourse {
+  id        String  @id @default(cuid())
+  userId    String
+  courseId  String
+  createdAt DateTime @default(now())
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model Subject {
+  id        String     @id @default(cuid())
+  slug      String     @unique
+  subCode   Int        @unique
+  subName   String
+  chapters  Chapter[]
+}
+
+model Chapter {
+  id          String   @id @default(cuid())
+  number      Int      @default(autoincrement())
+  chapterName String
+  slug        String   @unique
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id])
+  contents    Content[]
+  @@index([slug])
+}
+
+model Content {
+  id           String   @id @default(cuid())
+  contentNum   Int      @unique @default(autoincrement())
+  contentTitle String
+  contentUrl   String
+  chapterId    String
+  chapter      Chapter  @relation(fields: [chapterId], references: [id])
+  @@index([id])
+}
