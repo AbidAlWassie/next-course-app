@@ -9,46 +9,40 @@ interface CourseSubjectParams {
   courseSubject: string
 }
 
+export async function generateStaticParams() {
+  const subjects = await prisma.subject.findMany({
+    select: { slug: true },
+  })
+
+  return subjects.map((subject) => ({
+    courseSlug: subject.slug,
+    courseSubject: subject.slug,
+  }))
+}
+
 export default async function CourseSubject({
   params,
 }: {
   params: CourseSubjectParams
 }) {
-  // Log params for debugging
-  console.log("Params received:", params)
-
   const { courseSlug, courseSubject } = params
 
-  // Check if parameters are present
   if (!courseSlug || !courseSubject) {
-    return (
-      <div>
-        Error: Missing course or subject slug. courseSlug: {courseSlug},
-        courseSubject: {courseSubject}
-      </div>
-    )
+    return <div>Error: Missing course or subject slug.</div>
   }
 
   try {
-    // Fetch the subject using slug
     const subject = await prisma.subject.findUnique({
-      where: {
-        slug: courseSubject,
-      },
+      where: { slug: courseSubject },
     })
 
     if (!subject) {
       return <div>Error: Subject not found.</div>
     }
 
-    // Fetch chapters for the subject along with their contents
     const chapters = await prisma.chapter.findMany({
-      where: {
-        subjectId: subject.id,
-      },
-      include: {
-        contents: true, // Ensure this matches your schema
-      },
+      where: { subjectId: subject.id },
+      include: { contents: true },
     })
 
     return (
@@ -56,7 +50,6 @@ export default async function CourseSubject({
         <nav>
           <ButtonIconLeft href="/" text="Back" />
         </nav>
-
         <div className="chapterInfo flex flex-col">
           <h1 className="font-semibold mb-1">{subject.subName}</h1>
           <p className="font-normal mb-1">({subject.subCode})</p>
