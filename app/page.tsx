@@ -1,4 +1,3 @@
-// app/page.tsx
 import Loading from "@/components/Loading"
 import SessionProvider from "@/components/SessionProvider"
 import { Suspense } from "react"
@@ -12,11 +11,4 @@ export default function Home() {
       </Suspense>
     </SessionProvider>
   )
-}
-
-export type SearchParams = { [key: string]: string | string[] | undefined }
-
-export interface PageProps {
-  params: { [key: string]: string }
-  searchParams: SearchParams
 }
