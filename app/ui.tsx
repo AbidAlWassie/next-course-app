@@ -37,17 +37,22 @@ export default function HomeUI() {
   const [user, setUser] = useState<User | null>(null)
   const [allCourses, setAllCourses] = useState<Course[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.email) {
       fetchUserCourses(session.user.email)
       fetchAllCourses()
+    } else if (status !== "loading") {
+      setIsLoading(false)
     }
   }, [status, session])
 
   const fetchUserCourses = async (email: string) => {
     try {
-      const response = await fetch(`/api/user-courses?email=${email}`)
+      const response = await fetch(
+        `/api/user-courses?email=${encodeURIComponent(email)}`
+      )
       if (!response.ok) {
         throw new Error("Failed to fetch user courses")
       }
@@ -56,6 +61,8 @@ export default function HomeUI() {
     } catch (error) {
       console.error("Error fetching user courses:", error)
       setError("Failed to load user courses. Please try again later.")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -78,9 +85,9 @@ export default function HomeUI() {
       <Navbar />
 
       <main className="max-w-6xl mx-auto py-8 px-4">
-        {status === "loading" && <p className="text-center">Loading...</p>}
-
-        {status === "unauthenticated" && (
+        {isLoading ? (
+          <p className="text-center">Loading...</p>
+        ) : status === "unauthenticated" ? (
           <div className="text-center">
             <p className="mb-4">Please sign in to access your courses.</p>
             <Button
@@ -90,9 +97,7 @@ export default function HomeUI() {
               <Link href="/api/auth/signin">Sign In</Link>
             </Button>
           </div>
-        )}
-
-        {status === "authenticated" && session?.user && (
+        ) : status === "authenticated" && session?.user ? (
           <Card className="bg-slate-800 border-slate-700">
             <CardContent className="p-6">
               <h1 className="text-2xl font-bold mb-6">
@@ -150,7 +155,7 @@ export default function HomeUI() {
               </section>
             </CardContent>
           </Card>
-        )}
+        ) : null}
 
         <p className="font-bold text-center mt-6">
           Developed by{" "}
