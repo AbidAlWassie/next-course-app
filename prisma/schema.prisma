@@ -9,17 +9,20 @@ datasource db {
 
 model User {
   id            String          @id @default(cuid())
-  name          String?
-  email         String          @unique
+  name          String?         @db.VarChar(255)
+  email         String          @unique @db.VarChar(255)
   emailVerified DateTime?
   image         String?
   accounts      Account[]
   sessions      Session[]
-  Authenticator Authenticator[]
+  authenticators Authenticator[]
   courseLinks   UserCourse[]
+  subjectProgress UserSubjectProgress[]
   sslKeys       String[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([email])
 }
  
 model Account {
@@ -27,12 +30,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?
-  access_token      String?
+  refresh_token     String?      @db.Text
+  access_token      String?      @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?
+  id_token          String?      @db.Text
   session_state     String?
  
   createdAt DateTime @default(now())
@@ -41,6 +44,7 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
  
   @@id([provider, providerAccountId])
+  @@index([userId])
 }
  
 model Session {
@@ -51,17 +55,18 @@ model Session {
  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
  
 model VerificationToken {
   identifier String
-  token      String
+  token      String   @unique
   expires    DateTime
  
   @@id([identifier, token])
 }
  
-// Optional for WebAuthn support
 model Authenticator {
   credentialID         String  @unique
   userId               String
@@ -75,53 +80,80 @@ model Authenticator {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
  
   @@id([userId, credentialID])
+  @@index([userId])
 }
 
 model Course {
-  id         String       @id @default(cuid())
-  courseName String
-  slug       String       @unique
-  subs       String[]
-  users      UserCourse[] // This represents the many-to-many relationship with User
+  id          String       @id @default(cuid())
+  courseName  String       @db.VarChar(255)
+  slug        String       @unique
+  description String?      @db.Text
+  subjectCodes String[]
+  users       UserCourse[]
+
+  @@index([slug])
 }
 
 model UserCourse {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
   courseId  String
+  status    String   @default("enrolled") // e.g., "enrolled", "in-progress", "completed"
   createdAt DateTime @default(now())
 
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
+  @@index([userId, courseId])
 }
 
 model Subject {
-  id        String     @id @default(cuid())
-  slug      String     @unique
-  subCode   Int        @unique
-  subName   String
-  chapters  Chapter[]
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  subCode     String   @unique
+  subName     String   @db.VarChar(255)
+  description String?  @db.Text
+  chapters    Chapter[]
+  userProgress UserSubjectProgress[]
+
+  @@index([slug, subCode])
+}
+
+model UserSubjectProgress {
+  id        String   @id @default(cuid())
+  userId    String
+  subjectId String
+  progress  Float    @default(0)
+  lastStudied DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject Subject @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, subjectId])
+  @@index([userId, subjectId])
 }
 
 model Chapter {
   id          String   @id @default(cuid())
-  number      Int      @default(autoincrement())
-  chapterName String
+  number      Int
+  chapterName String   @db.VarChar(255)
   slug        String   @unique
   subjectId   String
   subject     Subject  @relation(fields: [subjectId], references: [id])
   contents    Content[]
-  @@index([slug])
+
+  @@index([slug, subjectId])
 }
 
 model Content {
   id           String   @id @default(cuid())
   contentNum   Int      @unique @default(autoincrement())
-  contentTitle String
+  contentTitle String   @db.VarChar(255)
   contentUrl   String
   chapterId    String
   chapter      Chapter  @relation(fields: [chapterId], references: [id])
-  @@index([id])
+
+  @@index([id, chapterId])
 }
+
