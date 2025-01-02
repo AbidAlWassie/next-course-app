@@ -1,11 +1,15 @@
 // app/page.tsx
+import Loading from "@/components/Loading"
 import SessionProvider from "@/components/SessionProvider"
-import UI from "./ui"
+import { Suspense } from "react"
+import HomeUI from "./ui"
 
 export default function Home() {
   return (
     <SessionProvider>
-      <UI />
+      <Suspense fallback={<Loading />}>
+        <HomeUI />
+      </Suspense>
     </SessionProvider>
   )
 }
@@ -13,6 +17,6 @@ export default function Home() {
 export type SearchParams = { [key: string]: string | string[] | undefined }
 
 export interface PageProps {
-  params: Promise<{ [key: string]: string }>
-  searchParams: Promise<SearchParams>
+  params: { [key: string]: string }
+  searchParams: SearchParams
 }
