@@ -10,9 +10,9 @@ interface CourseSubjectParams {
   courseSubject: string
 }
 
-// Define the correct PageProps type according to Next.js 15
+// Define the correct PageProps type
 type PageProps = {
-  params: CourseSubjectParams
+  params: Awaited<CourseSubjectParams> // Await resolved params
   searchParams: { [key: string]: string | string[] | undefined }
 }
 
