@@ -2,7 +2,7 @@ import ButtonIconLeft from "@/components/elements/ButtonIconLeft"
 import Carousel from "@/components/elements/Carousel"
 import YouTubeEmbed from "@/components/elements/YouTubeEmbed"
 import prisma from "@/lib/db"
-import { Metadata } from "next"
+import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 
 interface CourseSubjectParams {
@@ -10,9 +10,8 @@ interface CourseSubjectParams {
   courseSubject: string
 }
 
-// Define the correct PageProps type
 type PageProps = {
-  params: Awaited<CourseSubjectParams> // Await resolved params
+  params: CourseSubjectParams
   searchParams: { [key: string]: string | string[] | undefined }
 }
 
