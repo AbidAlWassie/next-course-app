@@ -1,4 +1,4 @@
-// path: app/courses/[courseSlug]/loading.tsx
+// path: app/courses/%5BcourseSlug%5D/loading.tsx
 export default function Loading() {
   return (
     <div className="min-h-screen flex flex-col gap-4 mx-6 pt-12 pb-24">

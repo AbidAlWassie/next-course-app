@@ -1,4 +1,4 @@
-// path: app/subjects/[chapterSlug]/[contentSlug]/page.tsx
+// path: app/subjects/%5BchapterSlug%5D/%5BcontentSlug%5D/page.tsx
 
 import YouTubeEmbed from "@/components/elements/YouTubeEmbed"
 import prisma from "@/lib/db"

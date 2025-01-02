@@ -1,4 +1,4 @@
-// path: app/courses/[courseSlug]/page.tsx
+// path: app/courses/%5BcourseSlug%5D/page.tsx
 import prisma from "@/lib/db"
 import Link from "next/link"
 
