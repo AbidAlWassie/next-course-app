@@ -1,76 +1,88 @@
 // path: app/courses/%5BcourseSlug%5D/page.tsx
 import prisma from "@/lib/db"
 import Link from "next/link"
+import { notFound } from "next/navigation"
 
-export default async function CoursePage({
-  params = { courseId: "", courseSlug: "" },
-}) {
-  // Fetch the course using slug
-  const course = await prisma.course.findUnique({
-    where: {
-      slug: params.courseSlug,
-    },
-  })
+interface CoursePageProps {
+  params: { courseSlug: string }
+}
 
-  // Fetch all subjects
-  const subjects = await prisma.subject.findMany({
-    select: {
-      id: true,
-      subCode: true,
-      subName: true,
-      slug: true,
-    },
-  })
+export default async function CoursePage({ params }: CoursePageProps) {
+  try {
+    const course = await prisma.course.findUnique({
+      where: { slug: params.courseSlug },
+      select: {
+        subjectCodes: true,
+        courseName: true,
+        slug: true,
+      },
+    })
 
-  // Check if course is found and subs are available
-  const subsArray = course?.subjectCodes
-    ? typeof course.subjectCodes === "string"
-      ? (course.subjectCodes as string)
-          .split(",")
-          .map((id: string) => id.trim())
-      : course.subjectCodes
-    : []
+    if (!course) {
+      notFound()
+    }
 
-  // Filter subjects based on subsArray
-  const filteredSubjects = subjects.filter((subject) =>
-    subsArray.includes(subject.id)
-  )
+    const subjects = await prisma.subject.findMany({
+      where: {
+        id: {
+          in: Array.isArray(course.subjectCodes)
+            ? course.subjectCodes
+            : typeof course.subjectCodes === "string" && course.subjectCodes
+            ? (course.subjectCodes as string)
+                .split(",")
+                .map((id: string) => id.trim())
+            : [],
+        },
+      },
+      select: {
+        id: true,
+        subCode: true,
+        subName: true,
+        slug: true,
+      },
+    })
 
-  return (
-    <main className="flex min-h-screen flex-col p-6">
-      <Link href={`/`} className="py-4">
-        <button className="bg-blue-500 py-2 px-3 rounded-md mr-2">Back</button>
-      </Link>
+    return (
+      <main className="flex min-h-screen flex-col p-6">
+        <Link href="/courses" className="py-4">
+          <button className="bg-blue-500 py-2 px-3 rounded-md mr-2 text-white">
+            Back to Courses
+          </button>
+        </Link>
 
-      <div className="bg-blue-500 base-200 p-3 rounded-md">
-        {course?.courseName}
-      </div>
+        <h1 className="text-2xl font-semibold mb-4 bg-blue-500 text-white p-3 rounded-md">
+          {course.courseName}
+        </h1>
 
-      <div className="subjectDiv flex flex-wrap justify-center border-[#1b3358] border-2 rounded-lg my-6 bg-[#0f2235] py-4">
-        {filteredSubjects.length > 0 ? (
-          filteredSubjects.map((subject) => (
-            <div
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-6">
+          {subjects.map((subject) => (
+            <Link
               key={subject.id}
-              className="subjectContainer w-full sm:w-1/2 md:w-1/3 lg:w-1/3 xl:w-1/5"
+              href={`/courses/${course.slug}/${subject.slug}`}
+              className="block"
             >
-              <Link href={`/courses/${course?.slug}/${subject.slug}`}>
-                <div
-                  key={subject.id}
-                  className="subject mx-auto w-full h-full bg-blue-800 flex flex-col my-4 rounded-[1rem]"
-                ></div>
-                <div className="flex flex-col justify-center items-center">
-                  <h1 className="subjectName font-semibold">
-                    {subject.subName}
-                  </h1>
-                  <p className="subjectCode font-semibold">{subject.subCode}</p>
-                </div>
-              </Link>
-            </div>
-          ))
-        ) : (
-          <p>No subjects available for this course.</p>
+              <div className="bg-blue-800 p-4 rounded-lg hover:bg-blue-700 transition-colors">
+                <h2 className="text-xl font-semibold text-white mb-2">
+                  {subject.subName}
+                </h2>
+                <p className="text-blue-200 font-semibold">{subject.subCode}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+        {subjects.length === 0 && (
+          <p className="text-center mt-6">
+            No subjects available for this course.
+          </p>
         )}
-      </div>
-    </main>
-  )
+      </main>
+    )
+  } catch (error) {
+    console.error("Error fetching course data:", error)
+    return (
+      <main className="flex min-h-screen flex-col p-6">
+        <h1 className="text-2xl font-semibold mb-4">Error loading course.</h1>
+      </main>
+    )
+  }
 }
